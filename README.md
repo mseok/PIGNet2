@@ -37,6 +37,7 @@ By executing `dataset/download.sh`, you can download all the following datasets.
 - CASF-2016 screening
 - DUD-E screening
 - derivative benchmark
+
 Then, you can extract the downloaded files by executing `dataset/untar.sh`.
 
 The source codes for generating structures used in positive data augmentation is placed in `generate_PDA` directory.
