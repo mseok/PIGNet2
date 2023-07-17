@@ -1,0 +1,23 @@
+biopython==1.79
+hydra-core==1.2.0
+matplotlib==3.5.2
+numpy==1.22.4
+omegaconf==2.2.2
+pandas==1.4.3
+seaborn==0.12.2
+rdkit==2022.03.4
+scikit_learn==1.1.2
+scipy==1.7.2
+tqdm==4.64.0
+tensorboard==2.9.1
+setuptools==59.5.0
+
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch==1.9.1+cu111
+
+--find-links https://data.pyg.org/whl/torch-1.9.0+cu111.html
+torch-scatter==2.0.9
+torch-sparse==0.6.12
+torch-cluster==1.5.9
+torch-spline-conv==1.2.1
+torch-geometric==2.0.3

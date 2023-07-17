@@ -1,0 +1,7 @@
+# @package data
+casf2016_scoring:
+  key_dir: ${hydra:runtime.config_sources\[1\].path}/../keys/derivative
+  data_dir:
+  processed_data_dir:
+  label_file:
+  test_result_path: ???

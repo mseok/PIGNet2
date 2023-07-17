@@ -1,0 +1,18 @@
+_target_: models.pignet_morse.PIGNetMorse
+n_gnn: 3
+dim_gnn: 128
+dim_mlp: 128
+interconv: true
+rotor_penalty: true
+conv_range: [0.5, 5.0]
+interaction_range: [0.5, 999.0]
+dev_vdw_radii_coeff: 0.0
+vdw_epsilon_scale: [0.0178, 0.0356]
+hydrogen_bond_cutoffs: [-0.7, 0.0]
+metal_ligand_cutoffs: [-0.7, 0.0]
+hydrophobic_cutoffs: [0.5, 1.5]
+vdw_width_scale: [1.0,2.0]
+short_range_A: 2.0
+# Current 'ionic_cutoffs' values are arbitrary!
+include_ionic: false
+ionic_cutoffs: [-101.0, -100.0]

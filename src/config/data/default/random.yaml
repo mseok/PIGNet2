@@ -1,0 +1,13 @@
+# @package data
+random:
+  key_dir: ${hydra:runtime.config_sources\[1\].path}/../keys/train/PDBbind_v2020/random
+  data_dir:
+  processed_data_dir:
+  label_file:
+  loss_range: [0.0, null]
+  loss_ratio: 5.0
+  objective: augment
+  train_result_path: train_random.txt
+  test_result_path: test_random.txt
+  pos_noise_std:
+  pos_noise_max:

@@ -1,0 +1,83 @@
+#!/usr/bin/env python
+import argparse
+import glob
+from typing import List
+
+import numpy as np
+from scipy import stats
+
+
+def mean_confidence_interval(
+    data: List[float], confidence: float = 0.95
+) -> List[float]:
+    a = 1.0 * np.array(data)
+    n = len(a)
+    m, se = np.mean(a), stats.sem(a)
+    h = se * stats.t.ppf((1 + confidence) / 2.0, n - 1)
+    return m, m - h, m + h
+
+
+def bootstrap_confidence(
+    true: np.ndarray,
+    pred: np.ndarray,
+    n: int = 10000,
+    confidence: float = 0.9,
+) -> np.ndarray:
+    Rs = []
+    for _ in range(n):
+        indice = np.random.randint(0, len(pred), len(pred))
+        t = [true[i] for i in indice]
+        p = [pred[i] for i in indice]
+        a, b, R, _, std_err = stats.linregress(t, p)
+        Rs.append(R)
+    Rs = np.array(Rs)
+    return stats.t.interval(confidence, len(Rs) - 1, loc=np.mean(Rs), scale=np.std(Rs))
+
+
+def main(args: argparse.Namespace) -> None:
+    files = glob.glob(args.file_prefix + "*")
+    try:
+        if "txt" in files[0]:
+            files = sorted(
+                files, key=lambda file: int(file.split("_")[-1].split(".")[0])
+            )
+        else:
+            files = sorted(files, key=lambda file: int(file.split("_")[-1]))
+    except Exception:
+        pass
+    if args.full_result:
+        print("File", "R", "SD", "RMSE", "CI_l", "CI_u", sep="\t")
+    for file in files:
+        with open(file, "r") as f:
+            lines = f.readlines()
+        lines = [line.split() for line in lines]
+        true = np.array([float(line[1]) for line in lines])
+        pred = np.array([float(line[2]) for line in lines])
+        a, b, R, _, std_err = stats.linregress(pred, true)
+        fit_pred = a * pred + b
+        SD = np.power(np.power(true - fit_pred, 2).sum() / (len(true) - 1), 0.5)
+        RMSE = np.power(np.power(true - pred, 2).mean(), 0.5)
+        confidence_interval = bootstrap_confidence(true, pred, args.n_bootstrap)
+        if args.full_result:
+            print(file, end="\t")
+            print(round(R, 3), end="\t")
+            print(round(SD, 3), end="\t")
+            print(round(RMSE, 3), end="\t")
+            print(round(confidence_interval[0], 3), end="\t")
+            print(round(confidence_interval[1], 3))
+        else:
+            print(round(R, 3))
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument("-v", "--full_result", action="store_true")
+    parser.add_argument(
+        "-f", "--file_prefix", type=str, default="result_scoring_", help=" "
+    )
+    parser.add_argument("-n", "--n_bootstrap", type=int, default=100, help=" ")
+    args = parser.parse_args()
+
+    main(args)

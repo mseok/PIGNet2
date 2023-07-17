@@ -1,0 +1,6 @@
+# @package data
+defaults:
+  - /data/horus/scoring
+  - /data/horus/docking
+  - /data/horus/random
+  - /data/horus/cross

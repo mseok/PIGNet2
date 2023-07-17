@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+outputs/
+keys/**/[0-9]*/
+dataset/Benchmark/
+dataset/PDBbind-v2020/
+dataset/tarfiles/
+experiments/outputs/
