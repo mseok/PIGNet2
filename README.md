@@ -15,13 +15,6 @@ conda activate pignet2
 pip install -r requirements.txt
 ```
 
-### Additional Software
-
-To execute the codes in this repository, you additionally need to install `smina`, `openbabel`, and `dockrmsd`.
-- [smina](https://sourceforge.net/projects/smina/)
-- [openbabel](https://github.com/openbabel/openbabel)
-- [dockrmsd](https://zhanggroup.org/DockRMSD/)
-
 ## Data
 
 Donwload our source data into `dataset` directory in this repository.
