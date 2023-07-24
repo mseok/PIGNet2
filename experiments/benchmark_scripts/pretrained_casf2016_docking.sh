@@ -4,6 +4,7 @@ ROOT_DIR=$(git rev-parse --show-toplevel)
 DATA_DIR=${ROOT_DIR}/dataset/Benchmark/docking
 EXE_DIR=${ROOT_DIR}/src
 
+SEED=0
 export CUDA_VISIBLE_DEVICES=$((0+${SEED}))
 
 # Using pre-trained model

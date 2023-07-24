@@ -6,3 +6,4 @@ dataset/Benchmark/
 dataset/PDBbind-v2020/
 dataset/tarfiles/
 experiments/outputs/
+experiments/pretrained/

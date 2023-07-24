@@ -1,8 +1,8 @@
 #!/bin/bash
 
-EXP=only_nda  # Experiment name to benchmark
-SEED=0  # Select a seed of the experiment
-EPOCH=3  # Select an epoch of the experiment
+EXP=  # Experiment name to benchmark
+SEED=  # Select a seed of the experiment
+EPOCH=  # Select an epoch of the experiment
 
 ROOT_DIR=$(git rev-parse --show-toplevel)
 DATA_DIR=${ROOT_DIR}/dataset/Benchmark/docking
