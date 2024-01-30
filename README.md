@@ -16,6 +16,7 @@ conda activate pignet2
 ### Install Dependencies
 ```console
 pip install -r requirements.txt
+mamba install -c conda-forge openbabel pymol-open-source
 ```
 
 ## Data

@@ -353,6 +353,8 @@ class ComplexDataset(Dataset):
                     mol_ligand, _, mol_target, _ = data
                 except ValueError:
                     mol_ligand, mol_target = data
+                except ValueError:
+                    mol_ligand, mol_target = data.mol_ligand, data.mol_target
 
             data = complex_to_data(
                 mol_ligand,
