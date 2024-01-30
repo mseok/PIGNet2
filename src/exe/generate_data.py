@@ -292,6 +292,7 @@ def extract_binding_pocket(
 def main(args: argparse.Namespace):
     mol_ligand = read_mols(args.ligand_file)[0]
     mol_target = extract_binding_pocket(mol_ligand, args.protein_file)
+    args.save_file_path.mkdir(parents=True, exist_ok=True)
 
     with open(args.save_file_path / args.ligand_file.stem, "wb") as f:
         pickle.dump((mol_ligand, mol_target), f)
