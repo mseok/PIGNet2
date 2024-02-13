@@ -21,3 +21,5 @@ By executing `download.sh`, you can download all the following datasets in `tarf
 
 After that, you can extract the downloaded files by executing `untar.sh`.
 This will make two new dataset, PDBbind-v2020 and Benchmark, in this directory.
+
+Also, you can generate PDA data with codes in `generate_PDA`

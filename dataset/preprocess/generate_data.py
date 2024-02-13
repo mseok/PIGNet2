@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 import argparse
-import os
-import sys
 import inspect
+import os
 import pickle
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
-from rdkit import Chem
-from pymol import cmd
-from rdkit.Chem import AllChem
-
 from protonate import protonate_ligand, protonate_pdb
+from pymol import cmd
+from rdkit import Chem
+from rdkit.Chem import AllChem
 
 PathLike = Union[str, os.PathLike]
 
@@ -47,6 +46,7 @@ def extract(
         cmd.unbond("metals", "*")
     if remove_h_in_tmp_save:
         cmd.remove("h.")
+    assert cmd.count_atoms("prot"), f"No protein found in {receptor_pdb}"
 
     # Load the ligand as name 'lig'.
     if ligand_sdf_is_large:
@@ -57,6 +57,7 @@ def extract(
         cmd.load(ligand_sdf, "lig_all")
         cmd.create("lig", f"%lig_all and state {ligand_idx}")
         cmd.delete("%lig_all")
+    assert cmd.count_atoms("lig"), f"No ligand found in {ligand_sdf}"
 
     # Extract the pocket.
     cmd.create("pocket", f"br. (%prot and not h.) w. {distance} of (%lig and not h.)")
@@ -81,7 +82,7 @@ def extract(
     if pocket is None and retry_with_obabel:
         if not silent:
             print(
-                f"{receptor_pdb}, {ligand_sdf}:",
+                f"{receptor_pdb}, {ligand_sdf}, {tmp_path}:",
                 "Retrying with obabel",
                 file=sys.stderr,
             )
@@ -95,7 +96,7 @@ def extract(
         (pocket,) = read_mols(tmp_path2, removeHs=remove_h_in_final_save)
         os.remove(tmp_path2)
 
-    os.remove(tmp_path)
+    # os.remove(tmp_path)
 
     # If failed, retry by reducing `connect_cutoff`.
     if pocket is None and retry_with_cutoff:
@@ -299,18 +300,45 @@ def main(args: argparse.Namespace):
     else:
         pdb_file = protonate_pdb(args.pdb_file)
 
-    mol_ligand = read_mols(args.ligand_file)[0]
-    if not args.no_prot_sdf:
-        mol_ligand = protonate_ligand(mol_ligand)
-        if not mol_ligand:
-            print("protonate_ligand failed:", output_name, file=sys.stderr)
-            exit()
+    if len(list(read_mols(args.ligand_file))) > 1:
+        for mol_idx, mol_ligand in enumerate(read_mols(args.ligand_file)):
+            # mol_ligand = read_mols(args.ligand_file)[0]
+            if not args.no_prot_sdf:
+                mol_ligand = protonate_ligand(mol_ligand)
+                if not mol_ligand:
+                    print("protonate_ligand failed:", output_name, file=sys.stderr)
+                    exit()
 
-    mol_target = extract_binding_pocket(mol_ligand, pdb_file)
-    args.save_file_path.mkdir(parents=True, exist_ok=True)
+            mol_target = extract_binding_pocket(mol_ligand, pdb_file)
+            args.save_file_path.mkdir(parents=True, exist_ok=True)
 
-    with open(args.save_file_path / args.ligand_file.stem, "wb") as f:
-        pickle.dump((mol_ligand, mol_target), f)
+            filename = (
+                f"{args.prefix}_{args.ligand_file.stem}_{mol_idx}"
+                if args.prefix
+                else f"{args.ligand_file.stem}_{mol_idx}"
+            )
+            with open(
+                args.save_file_path / filename, "wb"
+            ) as f:
+                pickle.dump((mol_ligand, mol_target), f)
+    else:
+        mol_ligand = read_mols(args.ligand_file)[0]
+        if not args.no_prot_sdf:
+            mol_ligand = protonate_ligand(mol_ligand)
+            if not mol_ligand:
+                print("protonate_ligand failed:", output_name, file=sys.stderr)
+                exit()
+
+        mol_target = extract_binding_pocket(mol_ligand, pdb_file)
+        args.save_file_path.mkdir(parents=True, exist_ok=True)
+
+        filename = (
+            f"{args.prefix}_{args.ligand_file.stem}"
+            if args.prefix
+            else args.ligand_file.stem
+        )
+        with open(args.save_file_path / filename, "wb") as f:
+            pickle.dump((mol_ligand, mol_target), f)
     return
 
 
@@ -318,12 +346,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument(
-        "-p",
-        "--pdb_file",
-        type=Path,
-        help="protein .pdb file"
-    )
+    parser.add_argument("-p", "--pdb_file", type=Path, help="protein .pdb file")
     parser.add_argument(
         "-l",
         "--ligand_file",
@@ -341,7 +364,13 @@ if __name__ == "__main__":
         "--save_file_path",
         type=Path,
         help="save files (.pt) directory",
-        default="./data"
+        default="./data",
+    )
+    parser.add_argument(
+        "--prefix",
+        type=str,
+        help="filename prefix",
+        default="",
     )
     args = parser.parse_args()
 
