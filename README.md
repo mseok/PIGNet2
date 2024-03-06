@@ -11,6 +11,7 @@ For the case of using `conda`, create the environment named `pignet2` as followi
 ```console
 conda create -n pignet2 python=3.9
 conda activate pignet2
+conda install rdkit=2022.03.4 openbabel pymol-open-source -c conda-forge
 ```
 
 ### Install Dependencies
@@ -73,3 +74,38 @@ You can find the pre-trained models in `src/ckpt`.
 We provide PIGNet2 models trained with both positive and negative data augemntation, which is the best model.
 You can execute the `experiments/benchmark/pretrained_*.sh` scripts to get the benchmark results of pre-trained models.
 The scripts will generate result files in `experiments/pretrained`.
+
+# Using PIGNet2 for a single data point
+> [!NOTE]  
+> We highly recommend to use SMINA-optimized ligand conformations and doing 4-model ensemble to get accurate results.
+
+Prepare protein pdb file and ligand sdf.
+Execute the following command to generate the result in `$OUTPUT` path (the output path is `predict.txt` by default):
+```console
+python src/exe/predict.py ./src/ckpt/pda_0.pt -p $PROTEIN -l $LIGAND -o $OUTPUT
+```
+By default, each element of result are named as `$(basename $PROTEIN .pdb)_$(basename $LIGAND .sdf)_${idx}`, where `${idx}` is an index of ligand conformation.
+
+## Case 1: a single pdb and a single sdf with one conformation
+```console
+python src/exe/predict.py ./src/ckpt/pda_0.pt -p examples/protein.pdb -l examples/ligand_single_conformation.sdf -o examples/case1.txt
+```
+
+## Case 2: a single pdb and a single sdf with multiple conformations
+`src/exe/predict.py` automatically enumerates all conformations in ligand sdf.
+```console
+python src/exe/predict.py ./src/ckpt/pda_0.pt -p examples/protein.pdb -l examples/ligand1.sdf -o examples/case2.txt
+```
+
+## Case 3: a single pdb and multiple sdfs with multiple conformations
+`src/exe/predict.py` automatically make protein-ligand pairs for a single pdb and all ligand sdfs.
+```console
+python src/exe/predict.py ./src/ckpt/pda_0.pt -p examples/protein.pdb -l examples/ligand1.sdf examples/ligand2.sdf -o examples/case3.txt
+```
+
+## Case 4: multiple pdbs and multiple sdfs with multiple conformations
+In this case, you should match the order of ligand and protein files and all of them sequentially.
+For example, if you have `protein1-ligand1`, `protein1-ligand2`, `protein2-ligand3`, you should do like following:
+```console
+python src/exe/predict.py ./src/ckpt/pda_0.pt -p protein1.pdb protein1.pdb protein2.pdb -l ligand1.sdf ligand2.sdf ligand3.sdf
+```

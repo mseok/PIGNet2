@@ -339,6 +339,10 @@ def main(args: argparse.Namespace):
         )
         with open(args.save_file_path / filename, "wb") as f:
             pickle.dump((mol_ligand, mol_target), f)
+
+    if not args.no_prot_pdb:
+        # pdb_file = protonate_pdb(args.pdb_file)
+        pdb_file.unlink()
     return
 
 

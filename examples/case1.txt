@@ -1,0 +1,1 @@
+protein_ligand_single_conformation_0	0.000	-3.990	-2.074	-1.021	0.000	-0.894	0.000

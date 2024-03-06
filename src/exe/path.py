@@ -18,7 +18,10 @@ def get_here(follow_symlink: bool = True):
 def set_path():
     here = get_here()
     upper = os.path.dirname(here)
+    git_home = os.path.dirname(upper)
+    preprocess_dir = os.path.join(git_home, "dataset/preprocess")
     sys.path.insert(1, upper)
+    sys.path.insert(1, preprocess_dir)
 
 
 set_path()
