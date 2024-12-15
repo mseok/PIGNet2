@@ -9,6 +9,7 @@ import time
 import hydra
 import torch
 from omegaconf import DictConfig, OmegaConf
+from tqdm import tqdm 
 
 # isort: off
 import path
@@ -23,7 +24,7 @@ def run(
 ):
     model.eval()
 
-    for batch in data.test_dataloader():
+    for batch in tqdm(data.test_dataloader()):
         with torch.no_grad():
             model.test_step(batch.to(device))
 
