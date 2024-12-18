@@ -14,7 +14,7 @@ untar() {
   tar -xf ${file} -C ${tar_dir}
 
   if [ ! -d ${tar_dir}/data ]; then
-    if [ -f ${tar_dir}/data_5_sdf ]; then
+    if [ -d ${tar_dir}/data_5_sdf ]; then
       ln -s ${tar_dir}/data_5_sdf ${tar_dir}/data
     else
       ln -s ${tar_dir}/data_5 ${tar_dir}/data

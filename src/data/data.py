@@ -268,7 +268,7 @@ def complex_to_data(
         mol_target = Chem.RemoveAllHs(mol_target)
 
     # Combine the values.
-    assert set(ligand.keys) == set(target.keys)
+    assert set(ligand.keys()) == set(target.keys())
     for attr in ligand.keys:
         ligand_value = ligand[attr]
         target_value = target[attr]
