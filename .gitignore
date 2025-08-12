@@ -8,3 +8,4 @@ dataset/tarfiles/
 experiments/outputs/
 experiments/pretrained/
 pignet2/
+pignet2.egginfo/

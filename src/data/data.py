@@ -339,7 +339,10 @@ class ComplexDataset(Dataset):
             data_path = os.path.join(self.processed_data_dir, key + ".pt")
 
             with open(data_path, "rb") as f:
-                data = torch.load(f)
+                try:
+                    data = torch.load(f)
+                except Exception as _:
+                    data = torch.load(f, weights_only=False)
 
         elif self.data_dir is not None:
             # pK_d -> kcal/mol

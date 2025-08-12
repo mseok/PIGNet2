@@ -9,7 +9,7 @@ import time
 import hydra
 import torch
 from omegaconf import DictConfig, OmegaConf
-from tqdm import tqdm 
+from tqdm import tqdm
 
 # isort: off
 import path
@@ -44,7 +44,12 @@ def main(config: DictConfig):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # Load the checkpoint.
-    checkpoint = torch.load(config.run.checkpoint_file, map_location=device)
+    try:
+        checkpoint = torch.load(config.run.checkpoint_file, map_location=device)
+    except Exception as _:
+        checkpoint = torch.load(
+            config.run.checkpoint_file, map_location=device, weights_only=False
+        )
     config = utils.merge_configs(checkpoint["config"], config)
     logger.info(f"Load from: {os.path.realpath(config.run.checkpoint_file)}")
 

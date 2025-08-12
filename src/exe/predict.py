@@ -95,7 +95,12 @@ def main(args: argparse.Namespace):
     print("device:", repr(device))
 
     # Load the model.
-    checkpoint = torch.load(args.checkpoint_file, map_location=device)
+    try:
+        checkpoint = torch.load(args.checkpoint_file, map_location=device)
+    except Exception as _:
+        checkpoint = torch.load(
+            args.checkpoint_file, map_location=device, weights_only=False
+        )
     config = utils.merge_configs(checkpoint["config"], {})
     assert "data" not in config
     with open_dict(config):
@@ -115,7 +120,9 @@ def main(args: argparse.Namespace):
     ]
 
     # Filter erroneous data.
-    data_list, names = zip(*((datum for data in data_list for datum in data if datum[0] is not None)))
+    data_list, names = zip(
+        *((datum for data in data_list for datum in data if datum[0] is not None))
+    )
     data = pyg_data.Batch.from_data_list(data_list)
 
     # Prediction starts.

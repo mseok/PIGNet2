@@ -70,7 +70,12 @@ class PIGNetCore:
             logger.info(f"Loading model from {model_path}")
 
             # Load checkpoint
-            checkpoint = torch.load(model_path, map_location=self.device)
+            try:
+                checkpoint = torch.load(model_path, map_location=self.device)
+            except Exception as _:
+                checkpoint = torch.load(
+                    model_path, map_location=self.device, weights_only=False
+                )
             config = utils.merge_configs(checkpoint.get("config", {}), {})
 
             # Ensure data config exists for prediction

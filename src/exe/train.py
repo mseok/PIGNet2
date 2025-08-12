@@ -61,7 +61,10 @@ def main(config: DictConfig):
 
     # Load the checkpoint if exists.
     if config.run.restart_file:
-        checkpoint = torch.load(config.run.restart_file, map_location=device)
+        try:
+            checkpoint = torch.load(config.run.restart_file, map_location=device)
+        except Exception as _:
+            checkpoint = torch.load(config.run.restart_file, map_location=device, weights_only=False)
         config = utils.merge_configs(checkpoint["config"], config)
         logger.info(f"Restart from: {os.path.realpath(config.run.restart_file)}")
     else:
