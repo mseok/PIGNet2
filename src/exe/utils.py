@@ -2,23 +2,21 @@ import logging
 import os
 import subprocess
 import sys
-import tempfile
 from collections import defaultdict
-from functools import wraps
-from pathlib import Path
-from typing import Any, Dict, Iterable, Optional, Tuple, Union
+from typing import Any, Union
+from collections.abc import Iterable
 
 import numpy as np
 import torch
 import torch_geometric as pyg
-from Bio.PDB import PDBIO, PDBParser
-from Bio.PDB.PDBIO import Select
 from hydra.utils import instantiate
 from omegaconf import DictConfig, OmegaConf, open_dict
-from rdkit import Chem
-from scipy.spatial import distance_matrix
 from scipy.stats import kendalltau, linregress
-from sklearn.metrics import r2_score
+
+try:
+    from sklearn.metrics import r2_score
+except ImportError:
+    r2_score = None
 from torch.nn import Module, init
 from torch.optim import Optimizer
 
@@ -83,10 +81,10 @@ def merge_configs(
 
 def initialize_state(
     device: torch.device,
-    checkpoint: Optional[Dict[str, Any]] = None,
-    config: Optional[DictConfig] = None,
+    checkpoint: dict[str, Any] | None = None,
+    config: DictConfig | None = None,
     in_features: int = -1,
-) -> Tuple[Module, int, DictConfig]:
+) -> tuple[Module, int, DictConfig]:
     """Initialize the model. Load their states if given.
 
     Returns:
@@ -134,7 +132,7 @@ def save_state(
     )
 
 
-def get_losses(model: Module) -> Dict[str, float]:
+def get_losses(model: Module) -> dict[str, float]:
     """Gather each task's loss from `model.losses` into a dict.
 
     Reurns:
@@ -157,7 +155,7 @@ def get_losses(model: Module) -> Dict[str, float]:
 def get_stats(
     model: Module,
     task: str,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """Get statistics using `model.prediction` and `model.labels`.
 
     Reurns:
@@ -222,7 +220,7 @@ def write_predictions(
 
 
 def initialize_logger(
-    log_file: Optional[PathLike] = None,
+    log_file: PathLike | None = None,
     log_file_level: int = logging.NOTSET,
     rotate: bool = False,
     mode: str = "w",
@@ -252,7 +250,7 @@ def initialize_logger(
 
 def get_log_line(
     tasks: Iterable[str],
-    losses: Dict[str, float] = None,
+    losses: dict[str, float] = None,
     title: bool = False,
 ) -> str:
     """Get the header line or loss-values line to be printed.
