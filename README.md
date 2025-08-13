@@ -152,7 +152,7 @@ from src.analysis import generate_detailed_explanation
 
 # Quick prediction with ensemble
 affinity = quick_predict("protein.pdb", "ligand.sdf")
-print(f"Predicted affinity: {affinity:.2f} pKd")
+print(f"Predicted affinity: {affinity:.2f} kcal/mol")
 
 # Advanced usage with PIGNetCore
 core = PIGNetCore(

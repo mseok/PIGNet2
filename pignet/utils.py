@@ -26,7 +26,7 @@ def quick_predict(
         verbose: Whether to print progress
 
     Returns:
-        Predicted binding affinity (pKd)
+        Predicted binding affinity (kcal/mol)
     """
     # Use all 4 pre-trained models
     model_dir = Path(__file__).parent / "ckpt"
@@ -229,7 +229,7 @@ def calculate_enrichment_factor(
     Returns:
         Enrichment factor
     """
-    # Sort by predictions (higher is better for pKd)
+    # Sort by predictions (higher is better for kcal/mol)
     sorted_indices = np.argsort(predictions)[::-1]
     sorted_labels = np.array(labels)[sorted_indices]
 
