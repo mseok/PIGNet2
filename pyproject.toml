@@ -55,15 +55,14 @@ Repository = "https://github.com/yourusername/PIGNet2.git"
 Issues = "https://github.com/yourusername/PIGNet2/issues"
 
 [project.scripts]
-pignet = "src.cli:cli"
+pignet = "pignet.cli:cli"
 
 [tool.setuptools]
-packages = ["src", "src.models", "src.models.layers", "src.data", "src.analysis", "src.exe", "src.benchmark", "src.analyze", "src.keys"]
+packages = ["pignet", "pignet.models", "pignet.models.layers", "pignet.data", "pignet.analysis", "pignet.exe", "pignet.benchmark"]
 include-package-data = true
 
 [tool.setuptools.package-data]
-src = ["ckpt/*.pt", "config/**/*.yaml", "keys/**/*.txt"]
-pignet2 = ["config/**/*.yaml"]
+pignet = ["ckpt/*.pt", "config/**/*.yaml", "keys/**/*.txt"]
 
 [tool.isort]
 line_length = 88

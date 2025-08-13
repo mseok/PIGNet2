@@ -12,10 +12,10 @@ from rdkit import Chem
 # Add src directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.data.data import complex_to_data
-from src.exe.generate_data import extract_binding_pocket, read_mols
-from src.exe.protonate import protonate_ligand, protonate_pdb
-from src.exe import utils
+from pignet.data.data import complex_to_data
+from pignet.exe.generate_data import extract_binding_pocket, read_mols
+from pignet.exe.protonate import protonate_ligand, protonate_pdb
+from pignet.exe import utils
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +77,15 @@ class PIGNetCore:
                     model_path, map_location=self.device, weights_only=False
                 )
             config = utils.merge_configs(checkpoint.get("config", {}), {})
+
+            # Update old model targets to new package structure
+            with open_dict(config):
+                if "model" in config and "_target_" in config.model:
+                    old_target = config.model._target_
+                    if old_target.startswith("models."):
+                        config.model._target_ = old_target.replace(
+                            "models.", "pignet.models."
+                        )
 
             # Ensure data config exists for prediction
             with open_dict(config):
@@ -159,7 +168,6 @@ class PIGNetCore:
                     mol_target,
                     key=name,
                     conv_range=conv_range,
-                    protein_pdb_path=str(protein_path),
                 )
 
                 # Extract residue information if requested
@@ -300,7 +308,7 @@ class PIGNetCore:
             # Get predictions for all keys (conformations)
             for datum, name, _ in data_list:
                 if task in model.predictions and name in model.predictions[task]:
-                    # Sum the energy components (vdw, hbond, ml, hydro)
+                    # Get energy components (vdw, hbond, ml, hydro)
                     energy_components = model.predictions[task][name]
                     total_energy = sum(energy_components)
                     predictions.append(total_energy)
@@ -330,7 +338,7 @@ class PIGNetCore:
             result = {
                 "complex_name": complex_name,
                 "affinity": mean_affinity,
-                "affinity_unit": "pKd",  # PIGNet predicts pKd values
+                "affinity_unit": "kcal/mol",  # PIGNet predicts kcal/mol values
                 "conformations": len(data_list),
                 "ensemble_size": len(self.models),
                 "all_predictions": ensemble_predictions,
@@ -352,7 +360,7 @@ class PIGNetCore:
             result = {
                 "complex_name": complex_name,
                 "affinity": mean_affinity,
-                "affinity_unit": "pKd",
+                "affinity_unit": "kcal/mol",
                 "conformations": len(data_list),
                 "predictions_per_conf": predictions,
                 "device": str(self.device),

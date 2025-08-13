@@ -1,8 +1,3 @@
-# CUDA devices should be recognized first.
-# isort: off
-import set_cuda
-
-# isort: on
 import os
 import time
 
@@ -12,10 +7,8 @@ from omegaconf import DictConfig, OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-# isort: off
-import path
-import utils
-from data import ComplexDataModule
+from . import utils
+from pignet.data.datamodule import ComplexDataModule
 
 
 def run(
@@ -47,7 +40,7 @@ def run(
                 model.validation_step(batch)
 
 
-@hydra.main(config_path="../config", config_name="config_train")
+@hydra.main(config_path="../../config", config_name="config_train")
 def main(config: DictConfig):
     logger = utils.initialize_logger(config.run.log_file)
     logger.info(f"Current working directory: {os.getcwd()}")
@@ -64,7 +57,9 @@ def main(config: DictConfig):
         try:
             checkpoint = torch.load(config.run.restart_file, map_location=device)
         except Exception as _:
-            checkpoint = torch.load(config.run.restart_file, map_location=device, weights_only=False)
+            checkpoint = torch.load(
+                config.run.restart_file, map_location=device, weights_only=False
+            )
         config = utils.merge_configs(checkpoint["config"], config)
         logger.info(f"Restart from: {os.path.realpath(config.run.restart_file)}")
     else:
@@ -149,11 +144,11 @@ def main(config: DictConfig):
             str(epoch),
             utils.get_log_line(data.tasks, train_losses),
             utils.get_log_line(data.tasks, test_losses),
-            "{:.3f}".format(train_r),
-            "{:.3f}".format(test_r),
-            "{:.3f}".format(train_tau),
-            "{:.3f}".format(test_tau),
-            "{:.3f}".format(end_time - start_time),
+            f"{train_r:.3f}",
+            f"{test_r:.3f}",
+            f"{train_tau:.3f}",
+            f"{test_tau:.3f}",
+            f"{end_time - start_time:.3f}",
         ]
         logger.info("\t".join(log_elements))
 

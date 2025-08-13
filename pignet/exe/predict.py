@@ -1,27 +1,18 @@
-# CUDA devices should be recognized first.
-# isort: off
-import set_cuda
-
-# isort: on
 import argparse
 import time
 from pathlib import Path
-from typing import List, Tuple, Union
-from warnings import warn
+from typing import Union
 
-import pymol
 import torch
 import torch_geometric.data as pyg_data
 from omegaconf import open_dict
 from rdkit import Chem
 
-# isort: off
-import path
-import utils
-from generate_data import extract_binding_pocket, read_mols
-from protonate import protonate_ligand, protonate_pdb
-from data.data import complex_to_data
-from utils import PathLike
+from pignet.exe import utils
+from pignet.exe.generate_data import extract_binding_pocket, read_mols
+from pignet.exe.protonate import protonate_ligand, protonate_pdb
+from pignet.data.data import complex_to_data
+from pignet.exe.utils import PathLike
 
 PathOrMol = Union[PathLike, Chem.Mol]
 
@@ -41,7 +32,7 @@ def run(
 def read_data(
     protein: Path,
     ligand: Path,
-    conv_range: Tuple[float, float],
+    conv_range: tuple[float, float],
     protonate_sdf: bool = True,
     protonate_protein: bool = True,
 ):
@@ -105,6 +96,13 @@ def main(args: argparse.Namespace):
     assert "data" not in config
     with open_dict(config):
         config.data = {"test": {"test_result_path": str(args.output_path)}}
+        if "model" in config and "_target_" in config.model:
+            old_target = config.model._target_
+            if old_target.startswith("models."):
+                config.model._target_ = old_target.replace(
+                    "models.", "pignet.models."
+                )
+
     model = utils.initialize_state(device, checkpoint, config)[0]
 
     # Prepare the data.
@@ -118,10 +116,11 @@ def main(args: argparse.Namespace):
         )
         for protein_file, ligand_file in zip(args.protein_files, args.ligand_files)
     ]
+    torch.save(data_list, "data.pt")
 
     # Filter erroneous data.
     data_list, names = zip(
-        *((datum for data in data_list for datum in data if datum[0] is not None))
+        *(datum for data in data_list for datum in data if datum[0] is not None)
     )
     data = pyg_data.Batch.from_data_list(data_list)
 

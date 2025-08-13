@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch.nn import GRUCell
-from torch_geometric.nn import Linear, MessagePassing
+from torch_geometric.nn import aggr as aggregation, Linear, MessagePassing
 from torch_geometric.utils import add_self_loops
 
 
@@ -20,6 +20,7 @@ class InteractionNet(MessagePassing):
         self.rnn = GRUCell(node_features, node_features)
         self.add_self_loops = add_self_loops
         self.aggr = aggr
+        self.aggr_module = aggregation.MaxAggregation() if aggr == "max" else aggregation.SumAggregation()
 
     def forward(self, x, edge_index):
         # Need to pass num_nodes to handle isolated nodes (in proteins).

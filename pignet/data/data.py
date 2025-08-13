@@ -1,6 +1,6 @@
 import os
 import pickle
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import torch
 from rdkit import Chem
@@ -13,9 +13,9 @@ from . import chem
 
 def one_hot_encode(
     x: Any,
-    kinds: List[Any],
+    kinds: list[Any],
     handle_unknown: str = "error",
-) -> List[bool]:
+) -> list[bool]:
     """
     Make a one-hot vector.
 
@@ -44,7 +44,7 @@ def one_hot_encode(
     return onehot
 
 
-def get_period_group(atom: Chem.Atom) -> List[bool]:
+def get_period_group(atom: Chem.Atom) -> list[bool]:
     period, group = chem.PERIODIC_TABLE[atom.GetSymbol().upper()]
     period_vec = one_hot_encode(period, chem.PERIODS)
     group_vec = one_hot_encode(group, chem.GROUPS)
@@ -61,17 +61,17 @@ def get_vdw_radius(atom: Chem.Atom) -> float:
     return radius
 
 
-def get_atom_charges(mol: Chem.Mol) -> List[float]:
+def get_atom_charges(mol: Chem.Mol) -> list[float]:
     charges = [atom.GetFormalCharge() for atom in mol.GetAtoms()]
     return charges
 
 
-def get_metals(mol: Chem.Mol) -> List[bool]:
+def get_metals(mol: Chem.Mol) -> list[bool]:
     mask = [atom.GetSymbol() in chem.METALS for atom in mol.GetAtoms()]
     return mask
 
 
-def get_smarts_matches(mol: Chem.Mol, smarts: str) -> List[bool]:
+def get_smarts_matches(mol: Chem.Mol, smarts: str) -> list[bool]:
     # Get the matching atom indices.
     pattern = Chem.MolFromSmarts(smarts)
     matches = {idx for match in mol.GetSubstructMatches(pattern) for idx in match}
@@ -81,7 +81,7 @@ def get_smarts_matches(mol: Chem.Mol, smarts: str) -> List[bool]:
     return mask
 
 
-def get_hydrophobes(mol: Chem.Mol) -> List[bool]:
+def get_hydrophobes(mol: Chem.Mol) -> list[bool]:
     mask = []
 
     for atom in mol.GetAtoms():
@@ -99,7 +99,7 @@ def get_hydrophobes(mol: Chem.Mol) -> List[bool]:
     return mask
 
 
-def atom_to_features(atom: Chem.Atom) -> List[bool]:
+def atom_to_features(atom: Chem.Atom) -> list[bool]:
     # Total 47, currently.
     features = [
         # Symbol (10)
@@ -239,9 +239,9 @@ def get_complex_edges(
 def complex_to_data(
     mol_ligand: Chem.Mol,
     mol_target: Chem.Mol,
-    label: Optional[float] = None,
-    key: Optional[str] = None,
-    conv_range: Tuple[float, float] = None,
+    label: float | None = None,
+    key: str | None = None,
+    conv_range: tuple[float, float] = None,
     remove_hydrogens: bool = True,
     pos_noise_std: float = 0.0,
     pos_noise_max: float = 0.0,
@@ -268,8 +268,8 @@ def complex_to_data(
         mol_target = Chem.RemoveAllHs(mol_target)
 
     # Combine the values.
-    assert set(ligand.keys) == set(target.keys)
-    for attr in ligand.keys:
+    assert set(ligand.keys()) == set(target.keys())
+    for attr in ligand.keys():
         ligand_value = ligand[attr]
         target_value = target[attr]
 
@@ -309,11 +309,11 @@ def complex_to_data(
 class ComplexDataset(Dataset):
     def __init__(
         self,
-        keys: List[str],
-        data_dir: Optional[str] = None,
-        id_to_y: Optional[Dict[str, float]] = None,
-        conv_range: Optional[Tuple[float, float]] = None,
-        processed_data_dir: Optional[str] = None,
+        keys: list[str],
+        data_dir: str | None = None,
+        id_to_y: dict[str, float] | None = None,
+        conv_range: tuple[float, float] | None = None,
+        processed_data_dir: str | None = None,
         pos_noise_std: float = 0.0,
         pos_noise_max: float = 0.0,
     ):

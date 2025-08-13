@@ -1,8 +1,3 @@
-# CUDA devices should be recognized first.
-# isort: off
-import set_cuda
-
-# isort: on
 import os
 import time
 
@@ -11,10 +6,8 @@ import torch
 from omegaconf import DictConfig, OmegaConf
 from tqdm import tqdm
 
-# isort: off
-import path
-import utils
-from data import ComplexDataModule
+from . import utils
+from pignet.data.datamodule import ComplexDataModule
 
 
 def run(
@@ -109,10 +102,10 @@ def main(config: DictConfig):
     log_elements = [
         str(epoch),
         utils.get_log_line([task], test_losses),
-        "{:.3f}".format(test_r2),
-        "{:.3f}".format(test_r),
-        "{:.3f}".format(test_tau),
-        "{:.3f}".format(end_time - start_time),
+        f"{test_r2:.3f}",
+        f"{test_r:.3f}",
+        f"{test_tau:.3f}",
+        f"{end_time - start_time:.3f}",
     ]
     logger.info("\t".join(log_elements))
 

@@ -3,7 +3,6 @@ import shutil
 import subprocess
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import List, Optional
 
 import dimorphite_dl
 from pymol import cmd
@@ -19,7 +18,7 @@ def protonate_mol(
     max_ph: float = 8.4,
     pka_precision: float = 1.0,
     max_variants: int = 128,
-) -> List[Chem.Mol]:
+) -> list[Chem.Mol]:
     """Protonate a molecule.
 
     Args:
@@ -32,22 +31,27 @@ def protonate_mol(
     Returns:
         A list of protonated `rdkit.Chem.Mol` objects.
     """
-    params = {
-        "min_ph": min_ph,
-        "max_ph": max_ph,
-        "pka_precision": pka_precision,
-        "max_variants": max_variants,
-    }
-    engine = dimorphite_dl.DimorphiteDL(**params)
-
     smi = Chem.MolToSmiles(mol)
-    protonated_smi = engine.protonate(smi)[0]
-    protonated_mol = AllChem.AssignBondOrdersFromTemplate(Chem.MolFromSmiles(protonated_smi), mol)
+    protonated_smiles = dimorphite_dl.protonate_smiles(
+        smi,
+        ph_min=min_ph,
+        ph_max=max_ph,
+        precision=pka_precision,
+        max_variants=max_variants,
+    )
+
+    if not protonated_smiles:
+        return mol
+
+    protonated_smi = protonated_smiles[0]
+    protonated_mol = AllChem.AssignBondOrdersFromTemplate(
+        Chem.MolFromSmiles(protonated_smi), mol
+    )
 
     return protonated_mol
 
 
-def get_temp_path(path: Optional[Path] = None, **kwargs) -> Path:
+def get_temp_path(path: Path | None = None, **kwargs) -> Path:
     """Return a temporary path if `path` is None, or else return as-is.
 
     Args:
@@ -66,8 +70,8 @@ def protonate_ligand(
     min_ph: float = 7.4,
     max_ph: float = 7.4,
     pka_precision: float = 0.0,
-    **kwargs
-) -> Optional[AllChem.Mol]:
+    **kwargs,
+) -> AllChem.Mol | None:
     """Protonate an rdkit Mol object using dimorphite-dl.
 
     Args:
@@ -81,7 +85,7 @@ def protonate_ligand(
 
 def protonate_pdb(
     pdb_input: Path,
-    pdb_output: Optional[Path] = None,
+    pdb_output: Path | None = None,
     correct_hetatm: bool = True,
     resave_by_pymol: bool = True,
     silent: bool = True,
@@ -121,7 +125,7 @@ def protonate_pdb(
     return pdb_output
 
 
-def _correct_hetatm(pdb_input: Path, pdb_output: Optional[Path] = None) -> None:
+def _correct_hetatm(pdb_input: Path, pdb_output: Path | None = None) -> None:
     """Alter non-polymer atoms as HETATM and resave using PyMOL.
 
     Args:
@@ -137,7 +141,7 @@ def _correct_hetatm(pdb_input: Path, pdb_output: Optional[Path] = None) -> None:
     cmd.save(pdb_output)
 
 
-def _resave_pdb(pdb_input: Path, pdb_output: Optional[Path] = None) -> None:
+def _resave_pdb(pdb_input: Path, pdb_output: Path | None = None) -> None:
     """Resave a .pdb file using PyMOL. HETATMs are rebonded using distance.
 
     Args:
@@ -151,6 +155,3 @@ def _resave_pdb(pdb_input: Path, pdb_output: Optional[Path] = None) -> None:
     cmd.set("connect_mode", 3)
     cmd.load(pdb_input)
     cmd.save(pdb_output)
-
-
-

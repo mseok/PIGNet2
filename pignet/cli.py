@@ -187,7 +187,7 @@ def quick(protein, ligand, output, device):
         pignet quick -p protein.pdb -l ligand.sdf
     """
     # Use all 4 pre-trained models
-    model_dir = Path(__file__).parent / "ckpt"
+    model_dir = Path(__file__).parents[1] / "ckpt"
     model_paths = [
         model_dir / "pda_0.pt",
         model_dir / "pda_1.pt",
