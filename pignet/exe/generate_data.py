@@ -23,7 +23,7 @@ def extract(
     ligand_sdf: Path,
     ligand_idx: int = 1,
     distance: float = 5.0,
-    tmp_ext: str = ".sdf",
+    tmp_ext: str = ".pdb",  # Changed to PDB to preserve residue info
     correct_oxygens: bool = False,
     unbond_metals: bool = True,
     remove_h_in_tmp_save: bool = True,

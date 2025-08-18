@@ -49,10 +49,10 @@ analysis = [
 all = ["pignet2[analysis]"]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/PIGNet2"
-Documentation = "https://github.com/yourusername/PIGNet2#readme"
-Repository = "https://github.com/yourusername/PIGNet2.git"
-Issues = "https://github.com/yourusername/PIGNet2/issues"
+Homepage = "https://github.com/mseok/PIGNet2"
+Documentation = "https://github.com/mseok/PIGNet2#readme"
+Repository = "https://github.com/mseok/PIGNet2.git"
+Issues = "https://github.com/mseok/PIGNet2/issues"
 
 [project.scripts]
 pignet = "pignet.cli:cli"

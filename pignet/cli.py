@@ -9,6 +9,7 @@ from pathlib import Path
 import click
 import numpy as np
 import pandas as pd
+import torch
 
 from .core import PIGNetCore
 from .analysis import generate_detailed_explanation
@@ -240,7 +241,14 @@ def quick(protein, ligand, output, device):
 
 
 @cli.command()
-@click.argument("checkpoint", type=click.Path(exists=True))
+@click.option(
+    "-c",
+    "--checkpoint",
+    type=click.Path(exists=True),
+    required=False,
+    default=None,
+    help="Path to model checkpoint",
+)
 @click.option(
     "-p",
     "--protein",
@@ -295,14 +303,34 @@ def explain(
     """Generate detailed explanation of prediction.
 
     Example:
-        pignet explain model.pt -p protein.pdb -l ligand.sdf --energy-breakdown
-        pignet explain model.pt -p protein.pdb -l ligand.sdf --fragment-analysis --format json
+        pignet explain -p protein.pdb -l ligand.sdf --energy-breakdown
+        pignet explain -c model.pt -p protein.pdb -l ligand.sdf --energy-breakdown
+        pignet explain -c model.pt -p protein.pdb -l ligand.sdf --fragment-analysis --format json
     """
+    # Use ensemble of all 4 models by default
+    model_dir = Path(__file__).parents[1] / "ckpt"
+    model_paths = [
+        model_dir / "pda_0.pt",
+        model_dir / "pda_1.pt",
+        model_dir / "pda_2.pt",
+        model_dir / "pda_3.pt",
+    ]
+
+    # Check if all models exist, otherwise use provided checkpoint
+    missing_models = [p for p in model_paths if not p.exists()]
+    if missing_models or checkpoint:
+        logger.info(f"Using single model: {checkpoint}")
+        model_paths = checkpoint
+        use_ensemble = False
+    else:
+        logger.info("Using ensemble of 4 pre-trained models")
+        use_ensemble = True
+
     # Initialize core model
     core = PIGNetCore(
-        model_paths=checkpoint,
+        model_paths=model_paths,
         device="cuda" if torch.cuda.is_available() else "cpu",
-        ensemble=False,
+        ensemble=use_ensemble,
     )
 
     # Generate explanation
@@ -317,20 +345,9 @@ def explain(
     )
 
     # Output results
-    if format == "json":
-        import json
-
-        output_str = json.dumps(explanation, indent=2, default=str)
-    elif format == "xml":
-        import xml.etree.ElementTree as ET
-
-        output_str = ET.tostring(explanation, encoding="unicode")
-    else:
-        output_str = explanation
-
     if output:
         with open(output, "w") as f:
-            f.write(output_str)
+            f.write(explanation)
         logger.info(f"Explanation saved to {output}")
     else:
         click.echo(output_str)

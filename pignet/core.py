@@ -9,9 +9,6 @@ import torch_geometric.data as pyg_data
 from omegaconf import open_dict
 from rdkit import Chem
 
-# Add src directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from pignet.data.data import complex_to_data
 from pignet.exe.generate_data import extract_binding_pocket, read_mols
 from pignet.exe.protonate import protonate_ligand, protonate_pdb
@@ -386,7 +383,7 @@ class PIGNetCore:
         Returns:
             Dictionary with energy components
         """
-        # This is a simplified version - would need model modifications for full implementation
+        # TODO: This is a simplified version - would need model modifications for full implementation
         energy_breakdown = {
             "vdw": 0.0,
             "hbond": 0.0,

@@ -4,7 +4,7 @@ from typing import Any
 
 import torch
 from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors, rdmolops
+from rdkit.Chem import BRICS, rdMolDescriptors, rdmolops
 from torch_geometric.data import Data, Dataset
 from torch_geometric.utils import dense_to_sparse
 
@@ -124,6 +124,7 @@ def mol_to_data(
     remove_hydrogens: bool = True,
     pos_noise_std: float = 0.0,
     pos_noise_max: float = 0.0,
+    fragmentation: bool = False,
 ) -> Data:
     """Convert a RDKit mol to PyG data.
     Every numerical attributes are converted to torch.tensor.
@@ -138,6 +139,10 @@ def mol_to_data(
         is_h_donor: (num_atoms,), bool
         is_h_acceptor: (num_atoms,), bool
         is_hydrophobic: (num_atoms,), bool
+        fragment_map: (num_atoms,), long (optional)
+        fragment_smiles: List[str] (optional)
+        residue_map: (num_atoms,), long (optional)
+        residue_names: List[str] (optional)
     """
     if remove_hydrogens:
         mol = Chem.RemoveAllHs(mol)
@@ -192,6 +197,70 @@ def mol_to_data(
     data.is_h_donor = torch.tensor(h_donors)
     data.is_h_acceptor = torch.tensor(h_acceptors)
     data.is_hydrophobic = torch.tensor(hydrophobes)
+
+    # BRICS fragmentation for ligands
+    if fragmentation:
+        try:
+            frags = []
+            broken_mol = BRICS.BreakBRICSBonds(mol)
+            frag_mols = list(Chem.GetMolFrags(broken_mol, asMols=True, frags=frags))
+
+            # Get atom to fragment mapping
+            if frags and len(frags) > 0:
+                atom_frag_indices = frags[: mol.GetNumAtoms()]
+                data.fragment_map = torch.tensor(atom_frag_indices, dtype=torch.long)
+
+                # Store fragment SMILES for explanation
+                fragment_smiles = []
+                for frag_mol in frag_mols:
+                    try:
+                        smiles = Chem.MolToSmiles(frag_mol)
+                        fragment_smiles.append(smiles)
+                    except:
+                        fragment_smiles.append("Unknown")
+                data.fragment_smiles = fragment_smiles
+            else:
+                # If fragmentation fails, treat entire molecule as one fragment
+                data.fragment_map = torch.zeros(mol.GetNumAtoms(), dtype=torch.long)
+                data.fragment_smiles = [Chem.MolToSmiles(mol)]
+        except:
+            # If BRICS fails, treat entire molecule as one fragment
+            data.fragment_map = torch.zeros(mol.GetNumAtoms(), dtype=torch.long)
+            try:
+                data.fragment_smiles = [Chem.MolToSmiles(mol)]
+            except:
+                data.fragment_smiles = ["Unknown"]
+
+    # Add residue mapping for proteins
+    if not fragmentation and mol.GetNumAtoms() > 0:
+        # Check if this is a protein by looking for PDB residue info
+        has_residue_info = False
+        residue_map = []
+        residue_names = set()
+        residue_name_list = []
+
+        for atom in mol.GetAtoms():
+            res_info = atom.GetPDBResidueInfo()
+            if res_info:
+                has_residue_info = True
+                res_name = res_info.GetResidueName()
+                res_num = res_info.GetResidueNumber()
+                res_chain = res_info.GetChainId()
+                res_id = f"{res_name}{res_num}{res_chain}"
+
+                if res_id not in residue_names:
+                    residue_names.add(res_id)
+                    residue_name_list.append(res_id)
+
+                residue_map.append(
+                    residue_name_list.index(res_id) + 1
+                )  # +1 so 0 means no residue
+            else:
+                residue_map.append(0)  # 0 means no residue (ligand atoms)
+
+        if has_residue_info:
+            data.residue_map = torch.tensor(residue_map, dtype=torch.long)
+            data.residue_names = residue_name_list
 
     return data
 
@@ -258,29 +327,69 @@ def complex_to_data(
             Ligand Mol object used for docking.
         mol_target: Chem.Mol
             Target Mol object used for docking.
+        fragment_map: (num_ligand_atoms,), long
+            Fragment assignment for ligand atoms
+        residue_map: (num_all_atoms,), long
+            Residue assignment (0 for ligand, >0 for protein residues)
     """
-    ligand = mol_to_data(mol_ligand, remove_hydrogens, pos_noise_std, pos_noise_max)
-    target = mol_to_data(mol_target, remove_hydrogens, pos_noise_std, pos_noise_max)
+    ligand = mol_to_data(
+        mol_ligand, remove_hydrogens, pos_noise_std, pos_noise_max, fragmentation=True
+    )
+    target = mol_to_data(
+        mol_target, remove_hydrogens, pos_noise_std, pos_noise_max, fragmentation=False
+    )
     data = Data()
 
     if remove_hydrogens:
         mol_ligand = Chem.RemoveAllHs(mol_ligand)
         mol_target = Chem.RemoveAllHs(mol_target)
 
-    # Combine the values.
-    assert set(ligand.keys()) == set(target.keys())
-    for attr in ligand.keys():
-        ligand_value = ligand[attr]
-        target_value = target[attr]
+    # Combine the values - get all unique keys from both ligand and target
+    all_keys = set(ligand.keys()) | set(target.keys())
 
-        # Shift atom indices for some attributes.
-        if attr in ("edge_index",):
-            target_value = target_value + ligand.num_nodes
+    for attr in all_keys:
+        # Handle ligand-only attributes
+        if attr in ("fragment_map", "fragment_smiles"):
+            if attr in ligand.keys():
+                data[attr] = ligand[attr]
+            continue
 
-        # Dimension to concatenate over.
-        cat_dim = ligand.__cat_dim__(attr, None)
-        value = torch.cat((ligand_value, target_value), cat_dim)
-        data[attr] = value
+        # Handle residue-specific attributes from target
+        if attr == "residue_map":
+            if attr in target.keys():
+                # Ligand atoms get residue ID 0 (no residue)
+                ligand_residue_map = torch.zeros(ligand.num_nodes, dtype=torch.long)
+                target_residue_map = target[attr]
+                # Combine them
+                value = torch.cat((ligand_residue_map, target_residue_map), 0)
+                data[attr] = value
+            continue
+
+        if attr == "residue_names":
+            if attr in target.keys():
+                # Store residue names from target only
+                data[attr] = target[attr]
+            continue
+
+        # Handle attributes present in both
+        if attr in ligand.keys() and attr in target.keys():
+            ligand_value = ligand[attr]
+            target_value = target[attr]
+
+            # Shift atom indices for some attributes.
+            if attr in ("edge_index",):
+                target_value = target_value + ligand.num_nodes
+
+            # Dimension to concatenate over.
+            cat_dim = ligand.__cat_dim__(attr, None)
+            value = torch.cat((ligand_value, target_value), cat_dim)
+            data[attr] = value
+        elif attr in ligand.keys():
+            # Only in ligand
+            data[attr] = ligand[attr]
+        elif attr in target.keys():
+            # Only in target (shouldn't reach here due to special cases above)
+            data[attr] = target[attr]
 
     if label is not None:
         data.y = torch.tensor(label, dtype=torch.float).view(1, 1)
