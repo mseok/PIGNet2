@@ -3,7 +3,7 @@ from omegaconf import DictConfig
 from torch.nn import Parameter, ReLU, Sigmoid
 from torch_geometric.data import Batch
 from torch_geometric.nn import Linear, Sequential
-from torch_scatter import scatter
+from torch_geometric.utils import scatter
 
 from . import physics
 from .pignet import PIGNet
@@ -155,7 +155,7 @@ class PIGNetMorse(PIGNet):
 
         energies_pairs = energies_pairs * masks
         # Per-graph sum -> (energy_types, batch)
-        energies = scatter(energies_pairs, sample.batch[edge_index_i[0]])
+        energies = scatter(energies_pairs, sample.batch[edge_index_i[0]], dim=-1)
         # Reshape -> (batch, energy_types)
         energies = energies.t().contiguous()
 

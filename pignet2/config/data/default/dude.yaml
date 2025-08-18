@@ -1,0 +1,8 @@
+# @package data
+dude:
+  key_group: ""
+  key_dir: ${hydra:runtime.config_sources\[1\].path}/../keys/DUD-E/${.key_group}
+  data_dir:
+  processed_data_dir:
+  label_file:
+  test_result_path: ???

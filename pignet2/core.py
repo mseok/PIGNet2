@@ -9,10 +9,10 @@ import torch_geometric.data as pyg_data
 from omegaconf import open_dict
 from rdkit import Chem
 
-from pignet.data.data import complex_to_data
-from pignet.exe.generate_data import extract_binding_pocket, read_mols
-from pignet.exe.protonate import protonate_ligand, protonate_pdb
-from pignet.exe import utils
+from pignet2.data.data import complex_to_data
+from pignet2.exe.generate_data import extract_binding_pocket, read_mols
+from pignet2.exe.protonate import protonate_ligand, protonate_pdb
+from pignet2.exe import utils
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class PIGNetCore:
                     old_target = config.model._target_
                     if old_target.startswith("models."):
                         config.model._target_ = old_target.replace(
-                            "models.", "pignet.models."
+                            "models.", "pignet2.models."
                         )
 
             # Ensure data config exists for prediction

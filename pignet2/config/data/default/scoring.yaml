@@ -1,0 +1,12 @@
+# @package data
+scoring:
+  key_dir: ${hydra:runtime.config_sources\[1\].path}/../keys/train/PDBbind_v2020/scoring
+  data_dir:
+  processed_data_dir:
+  label_file:
+  loss_ratio: 1.0
+  objective: regression
+  train_result_path: train_scoring.txt
+  test_result_path: test_scoring.txt
+  pos_noise_std:
+  pos_noise_max:

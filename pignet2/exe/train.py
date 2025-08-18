@@ -8,7 +8,7 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from . import utils
-from pignet.data.datamodule import ComplexDataModule
+from pignet2.data.datamodule import ComplexDataModule
 
 
 def run(

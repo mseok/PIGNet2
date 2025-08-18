@@ -1,0 +1,16 @@
+# @package data
+docking:
+  key_dir: ${hydra:runtime.config_sources\[1\].path}/../keys/train/PDBbind_v2020/docking
+  data_dir:
+  processed_data_dir:
+  label_file:
+  loss_range: [-1.0, null]
+  loss_ratio: 10.0
+  objective: augment
+  train_result_path: train_docking.txt
+  test_result_path: test_docking.txt
+  metadata_file: ${hydra:runtime.config_sources\[1\].path}/../data/rmsd/pdbbind-v2020_docking_rmsd.csv
+  train_min_rmsd: 4.0
+  test_min_rmsd: 4.0
+  pos_noise_std:
+  pos_noise_max:

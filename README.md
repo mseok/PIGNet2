@@ -1,43 +1,35 @@
 # PIGNet2: A versatile deep learning-based protein-ligand interaction prediction model for accurate binding affinity scoring and virtual screening
+
 This repository is the official implementation of [PIGNet2: A versatile deep learning-based protein-ligand interaction prediction model for accurate binding affinity scoring and virtual screening](https://arxiv.org/abs/2307.01066).
+
+## Package Structure
+
+PIGNet2 has been restructured into a modern Python package with the following architecture:
+
+- **`pignet2/`** - Main package directory
+  - **`models/`** - Neural network architectures (PIGNet, PIGNetMorse)
+  - **`data/`** - Data processing and loading utilities
+  - **`exe/`** - Execution scripts for training, testing, and prediction
+  - **`analysis/`** - Interaction analysis and explanation tools
+  - **`ckpt/`** - Pre-trained model checkpoints
+  - **`config/`** - Configuration files for models and datasets
+  - **`cli.py`** - Command-line interface
+  - **`core.py`** - Direct model loading and prediction interface
+  - **`utils.py`** - Utility functions
 
 ## Installation
 
-### Quick Install with CUDA Support (Recommended)
-Clone the repository and use the installation script for automatic CUDA configuration:
-```bash
-git clone https://github.com/mseok/PIGNet2.git
-cd PIGNet2
-
-# For CUDA 12.x (auto-detects CUDA version)
-./install_cuda.sh
-
-# For specific CUDA version
-./install_cuda.sh --cuda 12.1
-
-# For CPU-only installation
-./install_cuda.sh --cpu
+### Default
+```
+pip install pignet2
 ```
 
-The script will:
-1. Detect your CUDA version (or use the specified one)
-2. Install PyTorch with appropriate CUDA support
-3. Install PyTorch Geometric packages with matching CUDA versions
-4. Install PIGNet2 and all other dependencies
-5. Verify the installation
 
-### Manual Installation with CUDA 12
-If you prefer manual installation with CUDA 12 support:
-```bash
-# Install PyTorch with CUDA 12.1
-pip install torch --index-url https://download.pytorch.org/whl/cu121
-
-# Install PyTorch Geometric packages
-pip install torch-scatter torch-sparse torch-cluster torch-spline-conv -f https://data.pyg.org/whl/torch-2.0.0+cu121.html
-pip install torch-geometric
-
-# Install PIGNet2
-pip install -e .
+### GPU-supported Installation
+```
+pip install pignet2 --extra-index-url https://download.pytorch.org/whl/cu124 --find-links https://data.pyg.org/whl/torch-2.6.0+cu124.html
+```
+```
 ```
 
 ### Alternative: Manual Installation
@@ -47,30 +39,20 @@ If you prefer to set up the environment manually:
 You can use `conda` or `venv` for environment setting.
 For the case of using `conda`, create the environment named `pignet2` as following:
 ```console
-conda create -n pignet2 python=3.9
+conda create -n pignet2 python=3.10
 conda activate pignet2
-conda install rdkit=2022.03.4 openbabel pymol-open-source -c conda-forge
+conda install rdkit openbabel pymol-open-source -c conda-forge
 ```
 
-#### Install Dependencies
+#### Install PIGNet2
 ```console
-pip install -r requirements.txt
+# Install in development mode (recommended for development)
+pip install -e .
+
+# Or install normally
+pip install .
 ```
-
-### Optional Dependencies
-For additional features, install extra packages:
-```bash
-# For advanced analysis features
-pip install -e ".[analysis]"
-
-# For LLM agent integration
-pip install -e ".[agents]"
-
-# For development tools
-pip install -e ".[dev]"
-
-# Install everything
-pip install -e ".[analysis,agents,dev]"
+```
 ```
 
 ### Verify Installation
@@ -80,12 +62,12 @@ After installation, verify that PIGNet2 is properly installed:
 pignet --help
 
 # Test Python import
-python -c "from src.models import PIGNet; print('PIGNet2 installed successfully!')"
+python -c "from pignet2.models import PIGNet; print('PIGNet2 installed successfully!')"
 ```
 
 ## Data
 
-Donwload our source data into `dataset` directory in this repository.
+Download our source data into `dataset` directory in this repository.
 By executing `dataset/download.sh`, you can download all the following datasets.
 > training dataset
 - PDBbind v2020 scoring
@@ -134,10 +116,33 @@ src/benchmark/dude_screening_power.py -f experiments/outputs/${EXPERIMENT_NAME}/
 ```
 
 ## Pre-trained Models
-You can find the pre-trained models in `src/ckpt`.
-We provide PIGNet2 models trained with both positive and negative data augemntation, which is the best model.
+You can find the pre-trained models in `pignet2/ckpt/`:
+
+- `pda_0.pt` - Model trained with positive data augmentation (fold 0)
+- `pda_1.pt` - Model trained with positive data augmentation (fold 1)
+- `pda_2.pt` - Model trained with positive data augmentation (fold 2)
+- `pda_3.pt` - Model trained with positive data augmentation (fold 3)
+
+We provide PIGNet2 models trained with both positive and negative data augmentation, which represent the best performing models.
 You can execute the `experiments/benchmark/pretrained_*.sh` scripts to get the benchmark results of pre-trained models.
 The scripts will generate result files in `experiments/pretrained`.
+
+### Using Pre-trained Models
+
+```python
+from pignet2.core import PIGNetCore
+
+# Single model
+core = PIGNetCore("pignet2/ckpt/pda_0.pt")
+
+# Ensemble of all 4 models (recommended)
+core = PIGNetCore([
+    "pignet2/ckpt/pda_0.pt",
+    "pignet2/ckpt/pda_1.pt", 
+    "pignet2/ckpt/pda_2.pt",
+    "pignet2/ckpt/pda_3.pt"
+], ensemble=True)
+```
 
 # Using PIGNet2
 
@@ -145,18 +150,13 @@ The scripts will generate result files in `experiments/pretrained`.
 PIGNet2 now provides a clean, modular API for easy integration into your projects:
 
 ```python
-from src.models import PIGNet, PIGNetMorse
-from src.core import PIGNetCore
-from src.utils import quick_predict, batch_predict_from_dataframe
-from src.analysis import generate_detailed_explanation
-
-# Quick prediction with ensemble
-affinity = quick_predict("protein.pdb", "ligand.sdf")
-print(f"Predicted affinity: {affinity:.2f} kcal/mol")
+from pignet2.models import PIGNet, PIGNetMorse
+from pignet2.core import PIGNetCore
+from pignet2.analysis import generate_detailed_explanation
 
 # Advanced usage with PIGNetCore
 core = PIGNetCore(
-    model_paths=["src/ckpt/pda_0.pt"],
+    model_paths=["pignet2/ckpt/pda_0.pt"],
     device="cuda",
     ensemble=False
 )
@@ -167,13 +167,26 @@ result = core.predict_complex(
     detailed_interactions=True
 )
 
-# Batch processing from DataFrame
-import pandas as pd
-df = pd.DataFrame({
-    'protein_path': ['prot1.pdb', 'prot2.pdb'],
-    'ligand_path': ['lig1.sdf', 'lig2.sdf']
-})
-results = batch_predict_from_dataframe(df, "src/ckpt/pda_0.pt")
+# Ensemble prediction with all 4 models
+core = PIGNetCore(
+    model_paths=[
+        "pignet2/ckpt/pda_0.pt",
+        "pignet2/ckpt/pda_1.pt", 
+        "pignet2/ckpt/pda_2.pt",
+        "pignet2/ckpt/pda_3.pt"
+    ],
+    device="cuda",
+    ensemble=True
+)
+result = core.predict_complex("protein.pdb", "ligand.sdf")
+print(f"Predicted affinity: {result['affinity']:.2f} {result['affinity_unit']}")
+
+# Batch processing
+protein_ligand_pairs = [
+    ('prot1.pdb', 'lig1.sdf'),
+    ('prot2.pdb', 'lig2.sdf')
+]
+results = core.predict_batch(protein_ligand_pairs, track_residues=True)
 
 # Generate detailed analysis
 explanation = generate_detailed_explanation(
@@ -191,54 +204,54 @@ PIGNet2 now includes a user-friendly CLI powered by Click:
 pignet quick -p protein.pdb -l ligand.sdf
 
 # Single model prediction
-pignet predict src/ckpt/pda_0.pt -p protein.pdb -l ligand.sdf
+pignet predict pignet2/ckpt/pda_0.pt -p protein.pdb -l ligand.sdf
 
 # Batch prediction from CSV
-pignet batch compounds.csv model.pt -o results.csv
+pignet batch compounds.csv pignet2/ckpt/pda_0.pt -o results.csv
 
 # Detailed explanation with analysis
-pignet explain model.pt -p protein.pdb -l ligand.sdf --energy-breakdown --fragment-analysis
+pignet explain -c pignet2/ckpt/pda_0.pt -p protein.pdb -l ligand.sdf --energy-breakdown --fragment-analysis
 
 # Training a new model
 pignet train --config-name baseline --epochs 300
 
 # Testing a model
-pignet test model.pt --data-dir test_data/
+pignet test pignet2/ckpt/pda_0.pt --data-dir test_data/
 ```
 
 ## Legacy Command Line Usage
-> [!NOTE]  
+> [!NOTE]
 > We highly recommend to use SMINA-optimized ligand conformations and doing 4-model ensemble to get accurate results.
 
 Prepare protein pdb file and ligand sdf.
 Execute the following command to generate the result in `$OUTPUT` path (the output path is `predict.txt` by default):
 ```console
-python src/exe/predict.py ./src/ckpt/pda_0.pt -p $PROTEIN -l $LIGAND -o $OUTPUT
+python pignet2/exe/predict.py ./pignet2/ckpt/pda_0.pt -p $PROTEIN -l $LIGAND -o $OUTPUT
 ```
 By default, each element of result are named as `$(basename $PROTEIN .pdb)_$(basename $LIGAND .sdf)_${idx}`, where `${idx}` is an index of ligand conformation.
 
 ## Case 1: a single pdb and a single sdf with one conformation
 ```console
-python src/exe/predict.py ./src/ckpt/pda_0.pt -p examples/protein.pdb -l examples/ligand_single_conformation.sdf -o examples/case1.txt
+python pignet2/exe/predict.py ./pignet2/ckpt/pda_0.pt -p examples/protein.pdb -l examples/ligand_single_conformation.sdf -o examples/case1.txt
 ```
 
 ## Case 2: a single pdb and a single sdf with multiple conformations
-`src/exe/predict.py` automatically enumerates all conformations in ligand sdf.
+`pignet2/exe/predict.py` automatically enumerates all conformations in ligand sdf.
 ```console
-python src/exe/predict.py ./src/ckpt/pda_0.pt -p examples/protein.pdb -l examples/ligand1.sdf -o examples/case2.txt
+python pignet2/exe/predict.py ./pignet2/ckpt/pda_0.pt -p examples/protein.pdb -l examples/ligand1.sdf -o examples/case2.txt
 ```
 
 ## Case 3: a single pdb and multiple sdfs with multiple conformations
-`src/exe/predict.py` automatically make protein-ligand pairs for a single pdb and all ligand sdfs.
+`pignet2/exe/predict.py` automatically make protein-ligand pairs for a single pdb and all ligand sdfs.
 ```console
-python src/exe/predict.py ./src/ckpt/pda_0.pt -p examples/protein.pdb -l examples/ligand1.sdf examples/ligand2.sdf -o examples/case3.txt
+python pignet2/exe/predict.py ./pignet2/ckpt/pda_0.pt -p examples/protein.pdb -l examples/ligand1.sdf examples/ligand2.sdf -o examples/case3.txt
 ```
 
 ## Case 4: multiple pdbs and multiple sdfs with multiple conformations
 In this case, you should match the order of ligand and protein files and all of them sequentially.
 For example, if you have `protein1-ligand1`, `protein1-ligand2`, `protein2-ligand3`, you should do like following:
 ```console
-python src/exe/predict.py ./src/ckpt/pda_0.pt -p protein1.pdb protein1.pdb protein2.pdb -l ligand1.sdf ligand2.sdf ligand3.sdf
+python pignet2/exe/predict.py ./pignet2/ckpt/pda_0.pt -p protein1.pdb protein1.pdb protein2.pdb -l ligand1.sdf ligand2.sdf ligand3.sdf
 ```
 
 # Explanation about the results

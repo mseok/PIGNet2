@@ -1,0 +1,19 @@
+defaults:
+  - _self_
+  - run: train
+  - model: pignet
+  - data:
+  ## Disable creating Hydra log file.
+  - override hydra/job_logging: disabled
+
+hydra:
+  ## Allow using config files under user's workdir.
+  searchpath:
+    - file://${oc.env:PWD}
+  ## Dir to save configs. Relative to `hydra.run.dir`.
+  #+ `null` to disable saving configs.
+  output_subdir: null
+  run:
+    dir: outputs/${experiment_name}
+
+experiment_name: ${now:%Y-%m-%d}_${now:%H-%M-%S}

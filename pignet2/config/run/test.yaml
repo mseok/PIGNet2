@@ -1,0 +1,7 @@
+ngpu: 1
+batch_size: 400
+num_workers: 4
+pin_memory: true
+## Following are relative to `hydra.run.dir`.
+log_file: ${hydra:job.name}.log
+checkpoint_file: ???

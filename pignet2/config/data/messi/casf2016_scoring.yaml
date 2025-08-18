@@ -1,0 +1,9 @@
+# @package data
+defaults:
+  - /data/default/casf2016_scoring
+
+casf2016_scoring:
+  root_data_dir:
+  data_dir: ${.root_data_dir}/data
+  label_file: ${.root_data_dir}/pdb_to_affinity.txt
+  key_dir: ${.root_data_dir}/keys

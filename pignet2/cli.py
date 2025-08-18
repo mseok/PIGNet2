@@ -188,7 +188,7 @@ def quick(protein, ligand, output, device):
         pignet quick -p protein.pdb -l ligand.sdf
     """
     # Use all 4 pre-trained models
-    model_dir = Path(__file__).parents[1] / "ckpt"
+    model_dir = Path(__file__).parent / "ckpt"
     model_paths = [
         model_dir / "pda_0.pt",
         model_dir / "pda_1.pt",
@@ -200,7 +200,7 @@ def quick(protein, ligand, output, device):
     missing_models = [p for p in model_paths if not p.exists()]
     if missing_models:
         click.echo(f"Error: Missing model files: {missing_models}", err=True)
-        click.echo("Please ensure all 4 pre-trained models are in src/ckpt/", err=True)
+        click.echo("Please ensure all 4 pre-trained models are in pignet2/ckpt", err=True)
         sys.exit(1)
 
     logger.info("Loading ensemble of 4 pre-trained models")
@@ -308,7 +308,7 @@ def explain(
         pignet explain -c model.pt -p protein.pdb -l ligand.sdf --fragment-analysis --format json
     """
     # Use ensemble of all 4 models by default
-    model_dir = Path(__file__).parents[1] / "ckpt"
+    model_dir = Path(__file__).parent / "ckpt"
     model_paths = [
         model_dir / "pda_0.pt",
         model_dir / "pda_1.pt",
