@@ -19,6 +19,20 @@ conda install rdkit=2022.03.4 openbabel pymol-open-source -c conda-forge
 pip install -r requirements.txt
 ```
 
+### Install PIGNet2 as a Package
+After the conda env and dependencies are set up, install this repository as an editable package so the code is importable from anywhere:
+```console
+pip install -e .
+```
+This exposes the `pignet2` package (mapped from `src/`):
+```python
+from pignet2.models import PIGNet, PIGNetMorse
+from pignet2.data import ComplexDataModule, complex_to_data
+```
+> Note: `torch`, `torch-geometric` (and its CUDA wheels), and the conda-only packages (`rdkit`, `openbabel`, `pymol-open-source`) are **not** declared in `pyproject.toml` — they do not resolve through standard PyPI. Install them via the steps above (conda + `requirements.txt`) before `pip install -e .`.
+>
+> The scripts under `src/exe/` (e.g. `train.py`, `predict.py`, `test.py`) are run as standalone scripts and are not part of the importable package.
+
 ## Data
 
 Donwload our source data into `dataset` directory in this repository.

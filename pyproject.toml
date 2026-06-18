@@ -1,3 +1,46 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pignet2"
+version = "2.0.0"
+description = "PIGNet2: a versatile deep learning-based protein-ligand interaction prediction model"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+
+# NOTE: torch / torch-geometric / torch-scatter (cu111 wheels) and the
+# conda-only packages (rdkit, openbabel, pymol-open-source) are intentionally
+# NOT listed here. They do not resolve through standard PyPI metadata.
+# Install them separately as documented in README.md:
+#     conda install rdkit=2022.03.4 openbabel pymol-open-source -c conda-forge
+#     pip install -r requirements.txt
+dependencies = [
+    "biopython==1.79",
+    "hydra-core==1.2.0",
+    "matplotlib==3.5.2",
+    "numpy==1.22.4",
+    "omegaconf==2.2.2",
+    "pandas==1.4.3",
+    "seaborn==0.12.2",
+    "scikit-learn==1.1.2",
+    "scipy==1.7.2",
+    "tqdm==4.64.0",
+    "tensorboard==2.9.1",
+    "dimorphite_dl",
+]
+
+[tool.setuptools]
+# Map the on-disk ``src/`` directory to the importable ``pignet2`` package.
+package-dir = { pignet2 = "src" }
+packages = [
+    "pignet2",
+    "pignet2.data",
+    "pignet2.models",
+    "pignet2.models.layers",
+]
+
 [tool.isort]
 line_length = 88
 multi_line_output = 3
